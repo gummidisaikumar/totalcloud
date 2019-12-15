@@ -1,0 +1,10 @@
+.strip {
+  position: relative;
+  padding-top: $fs-10px;
+  padding-bottom: $fs-10px;
+  min-height: 750px;
+}
+
+.strip--short {
+  min-height: auto;
+}
