@@ -16,6 +16,7 @@ class TimeLineComponent extends React.Component {
   }
 
   render() {
+    console.log("timelinedata", this.props.data)
     return (
       <Strip className="strip strip--short" containerType="container">
         <Row className="py-2">
@@ -27,7 +28,11 @@ class TimeLineComponent extends React.Component {
                   <ContentBody
                     title={`${getDateWithMonthName(item.createdOn)}`}
                   >
-                    <Description text={`${item.description}`} optional="" />
+                   {item.data.data.map((item, index) => (
+                     <span key={index}>
+                        <font className={`${item.attributes.bold ? 'bold' : ''} ${item.attributes.italic ? 'italic' : ''}`}>{`${item.attributes.description}`}</font>
+                      </span>   
+                   ))}
                   </ContentBody>
                 </Content>
               ))}

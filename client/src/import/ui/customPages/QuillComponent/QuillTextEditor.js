@@ -6,13 +6,15 @@ import Strip from "../../customComponent/Strip/Strip";
 import TimeLineComponent from "../TimeLineComponent/TimeLineComponent";
 import Loading from "../../customComponent/Loading/Loading";
 
+
 class QuillTextEditor extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       data: [],
       description: "",
-      isLoading: false
+      isLoading: false,
+      timeLineData: []
     };
     this.handleSubmit = this.handleSubmit.bind(this);
     this.getText = this.getText.bind(this);
@@ -34,7 +36,7 @@ class QuillTextEditor extends React.Component {
       ["clean"]
     ];
 
-    new Quill("#editor-container", {
+   let quill = new Quill("#editor-container", {
       modules: {
         toolbar: toolbarOptions
       },
@@ -54,8 +56,9 @@ class QuillTextEditor extends React.Component {
       .then(data => {
         if (data.status == 200) {
           if (data.result.length > 0) {
+            console.log("result", data.result);
             this.setState({
-              data: data.result
+              timeLineData: data.result
             });
           }
         } else {
@@ -66,15 +69,28 @@ class QuillTextEditor extends React.Component {
 
   async getText(e) {
     e.preventDefault();
-    const quill = new Quill("#editor-container");
+    let quill = new Quill("#editor-container");
     const getTextValue = quill.getContents();
-    console.log("getText", getTextValue);
-    await getTextValue.ops.map(item => {
-      this.setState({
-        description: item.insert
-      });
+    let obj ={};
+    let dataArray = [];
+    let attribute={};
+    getTextValue.ops.map(item => {
+        if(item.hasOwnProperty("attributes")){
+            attribute = {
+                bold: item.attributes.bold ? item.attributes.bold : false,
+                italic: item.attributes.italic ? item.attributes.italic : false
+            }
+        }
+        obj= {
+            description: item.insert,
+            attributes: attribute ? attribute : null,
+       }
+       dataArray.push(obj); 
     });
-    this.handleSubmit();
+    await this.setState({
+      data: dataArray
+    })
+    await this.handleSubmit();
   }
 
   async handleSubmit() {
@@ -82,7 +98,7 @@ class QuillTextEditor extends React.Component {
       isLoading: true
     });
     const data = {
-      description: this.state.description
+      data: this.state.data
     };
     await fetch("http://localhost:8000/timeline", {
       method: "POST",
@@ -90,26 +106,25 @@ class QuillTextEditor extends React.Component {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(data)
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(data => {
-        debugger;
-        if (data.status == 200) {
-          this.setState({
-            description: "",
-            isLoading: false
-          });
-          const quill = new Quill("#editor-container");
-          quill.setText("");
-          this.getTimeLineData();
-        } else {
-          this.setState({
-            description: "",
-            isLoading: false
-          });
-          console.log("connected failed");
-        }
-      });
+          debugger;
+          if (data.status == 200) {
+            this.setState({
+              description: "",
+              isLoading: false
+            });
+            let quill = new Quill("#editor-container");
+            quill.setText("");
+         this.getTimeLineData();
+          } else {
+            this.setState({
+              description: "",
+              isLoading: false
+            });
+            console.log("connected failed");
+          }
+    });
   }
 
   render() {
@@ -138,14 +153,14 @@ class QuillTextEditor extends React.Component {
               </Col>
             ) : null}
           </Row>
-          <Row className={`${this.state.isLoading ? "py-2" : "py-5"}`}>
-            <Col xs={12} sm={12} md={12} lg={12} xl={12} className="text-right py-2">
+          <Row className={`${this.state.isLoading ? "py-1" : "py-5"}`}>
+            <Col xs={12} sm={12} md={12} lg={12} xl={12} className="text-right">
               <Button onClick={e => this.getText(e)}>Save</Button>
             </Col>
           </Row>
         </Strip>
-        {this.state.data.length > 0 ? (
-          <TimeLineComponent data={this.state.data} />
+        {this.state.timeLineData.length > 0 ? (
+          <TimeLineComponent data={this.state.timeLineData} />
         ) : null}
       </RenderPage>
     );
